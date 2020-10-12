@@ -1,5 +1,5 @@
 <head>
-<base href="/ARKEngramFilter/" />
+    <base href="/ARKEngramFilter/" />
 </head>
 
 <html>
@@ -14,26 +14,23 @@
 <script>
     const expression = /OverrideNamedEngramEntries=(.*)/g;
 
-    function parseServerOutput() {
-        var serverOutput = document.getElementById("serverOutput").value;
-        var toHide = document.getElementById("toHide").value;
-
-        var serverEngrams = serverOutput.match(expression);
-
-        if (!serverEngrams) {
-            alert("Invalid server output input.");
-            return
+    function setupHides(hideInput) {
+        if (!hideInput) {
+            return []
         }
 
-        var engramsToHide = toHide.split("\n");
+        var engramsToHide = hideInput.split("\n");
 
         var engramsToHideRe = []
         engramsToHide.forEach(function(eHide) {
             engramsToHideRe.push(new RegExp(eHide))
         })
 
-        var postParse = []
+        return engramsToHide
+    }
 
+    function filterEngrams(serverEngrams, engramRE) {
+        var postParse = []
         serverEngrams.forEach(function(sEngram) {
             var match = engramsToHideRe.some(function(eHideRe, index) {
                 if (sEngram.match(eHideRe)) {
@@ -48,9 +45,37 @@
             }
         })
 
-        document.getElementById("postParse").value = postParse.join("\n")
-        $('#myTabs a[href="#output"]').tab('show')
+        return postParse.join("\n")
+    }
 
+    function parseServerOutput() {
+        var serverOutput = document.getElementById("serverOutput").value;
+        var toHide = document.getElementById("toHide").value;
+
+        var serverEngrams = serverOutput.match(expression);
+
+        if (!serverEngrams) {
+            alert("Invalid server output input.");
+            return
+        }
+
+        engramsToHideRe = setupHides(toHide)
+        postParse = filterEngrams(serverEngrams, engramsToHideRe)
+
+        if (document.getElementById("noLevels").checked) {
+            postParse = postParse.replace(/(EngramLevelRequirement=)\d*/g, "$10")
+        }
+
+        if (document.getElementById("noCost").checked) {
+            postParse = postParse.replace(/(EngramPointsCost=)\d*/g, "$10")
+        }
+
+        if (document.getElementById("noPreReqs").checked) {
+            postParse = postParse.replace(/(RemoveEngramPreReq=)false/g, "$1true")
+        }
+
+        document.getElementById("postParse").value = postParse
+        $('#myTabs a[href="#output"]').tab('show')
     }
 </script>
 <br>
@@ -77,6 +102,22 @@
                         <!-- Engrams to hide -->
                         <label class="col-form-label col-form-label-lg" for="toHide">Engrams to hide (newline seperated) (regex):</label>
                         <textarea class="form-control" rows="10" placeholder="&quot;EngramEntry_Bow_C&quot;&#13;&#10;&quot;EngramEntry_WeaponWhip_C&quot;" id="toHide"></textarea>
+                        <br>
+
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="noLevels">
+                            <label class="custom-control-label" for="noLevels">Remove Level Requirements</label>
+                        </div>
+
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="noCost">
+                            <label class="custom-control-label" for="noCost">Remove Point Cost</label>
+                        </div>
+
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="noPreReqs">
+                            <label class="custom-control-label" for="noPreReqs">Remove Pre-Requirements</label>
+                        </div>
                         <br>
 
                         <!-- Submit button -->

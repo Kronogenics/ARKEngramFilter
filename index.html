@@ -8,84 +8,84 @@
 <script src="/static/js/bootstrap.bundle.min.js"></script>
 
 <script>
-	const expression = /OverrideNamedEngramEntries=(.*)/g;
+    const expression = /OverrideNamedEngramEntries=(.*)/g;
 
-	function parseServerOutput() {
-		var serverOutput = document.getElementById("serverOutput").value;
-		var toHide = document.getElementById("toHide").value;
+    function parseServerOutput() {
+        var serverOutput = document.getElementById("serverOutput").value;
+        var toHide = document.getElementById("toHide").value;
 
-		var serverEngrams = serverOutput.match(expression);
+        var serverEngrams = serverOutput.match(expression);
 
-		if (!serverEngrams) {
-			alert("Invalid server output input.");
-			return
-		}
+        if (!serverEngrams) {
+            alert("Invalid server output input.");
+            return
+        }
 
-		var engramsToHide = toHide.split("\n");
+        var engramsToHide = toHide.split("\n");
 
-		var engramsToHideRe = []
-		engramsToHide.forEach(function(eHide) {
-			engramsToHideRe.push(new RegExp(eHide))
-		})
+        var engramsToHideRe = []
+        engramsToHide.forEach(function(eHide) {
+            engramsToHideRe.push(new RegExp(eHide))
+        })
 
-		var postParse = []
+        var postParse = []
 
-		serverEngrams.forEach(function(sEngram) {
-			var match = engramsToHideRe.some(function(eHideRe, index) {
-				if (sEngram.match(eHideRe)) {
-					return true;
-				} else {
-					return false
-				}
-			})
+        serverEngrams.forEach(function(sEngram) {
+            var match = engramsToHideRe.some(function(eHideRe, index) {
+                if (sEngram.match(eHideRe)) {
+                    return true;
+                } else {
+                    return false
+                }
+            })
 
-			if (!match) {
-				postParse.push(sEngram)
-			}
-		})
+            if (!match) {
+                postParse.push(sEngram)
+            }
+        })
 
-		document.getElementById("postParse").value = postParse.join("\n")
-		$('#myTabs a[href="#output"]').tab('show')
+        document.getElementById("postParse").value = postParse.join("\n")
+        $('#myTabs a[href="#output"]').tab('show')
 
-	}
+    }
 </script>
 <br>
 <div class="form-horizontal">
     <div class="form-group">
         <div class="col-auto">
-        	<!-- Tabs -->
-    		<ul class="nav nav-tabs" id="myTabs">
-				<li class="nav-item">
-				    <a class="nav-link active" data-toggle="tab" href="#inputs">Inputs</a>
-				</li>
-			    <li class="nav-item">
-			        <a class="nav-link" data-toggle="tab" href="#output">Outputs</a>
-			    </li>
-			</ul>
-			<div id="myTabContent" class="tab-content">
-				<div class="tab-pane fade active show" id="inputs">
-					<form action="javascript:parseServerOutput()">
-			        	<!-- Server output -->
-						<label class="col-form-label col-form-label-lg" for="serverOutput">Server output:</label>
-			            <textarea class="form-control" rows="10" required id="serverOutput"></textarea>
-			            <br>
+            <!-- Tabs -->
+            <ul class="nav nav-tabs" id="myTabs">
+                <li class="nav-item">
+                    <a class="nav-link active" data-toggle="tab" href="#inputs">Inputs</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#output">Outputs</a>
+                </li>
+            </ul>
+            <div id="myTabContent" class="tab-content">
+                <div class="tab-pane fade active show" id="inputs">
+                    <form action="javascript:parseServerOutput()">
+                        <!-- Server output -->
+                        <label class="col-form-label col-form-label-lg" for="serverOutput">Server output:</label>
+                        <textarea class="form-control" rows="10" required id="serverOutput"></textarea>
+                        <br>
 
-			            <!-- Engrams to hide -->
-						<label class="col-form-label col-form-label-lg" for="toHide">Engrams to hide (newline seperated) (regex):</label>
-			            <textarea class="form-control" rows="10" placeholder="&quot;EngramEntry_Bow_C&quot;&#13;&#10;&quot;EngramEntry_WeaponWhip_C&quot;" id="toHide"></textarea>
-			            <br>
+                        <!-- Engrams to hide -->
+                        <label class="col-form-label col-form-label-lg" for="toHide">Engrams to hide (newline seperated) (regex):</label>
+                        <textarea class="form-control" rows="10" placeholder="&quot;EngramEntry_Bow_C&quot;&#13;&#10;&quot;EngramEntry_WeaponWhip_C&quot;" id="toHide"></textarea>
+                        <br>
 
-			            <!-- Submit button -->
-			    		<input type="submit" value="Submit">
-					</form>
-				</div>
+                        <!-- Submit button -->
+                        <input type="submit" value="Submit">
+                    </form>
+                </div>
 
-		    	<div class="tab-pane fade" id="output">
-		    		<!-- Post process read only textbox -->
-					<label class="col-form-label col-form-label-lg" for="postParse">Post processing:</label>
-		            <textarea class="form-control" rows="27" id="postParse" readonly=""></textarea>
-		        </div>
-		    </div>
+                <div class="tab-pane fade" id="output">
+                    <!-- Post process read only textbox -->
+                    <label class="col-form-label col-form-label-lg" for="postParse">Post processing:</label>
+                    <textarea class="form-control" rows="27" id="postParse" readonly=""></textarea>
+                </div>
+            </div>
         </div>
     </div>
 </div>

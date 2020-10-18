@@ -81,6 +81,26 @@
         $('#myTabs a[href="#output"]').tab('show')
     }
 
+    function getInputs(id) {
+        id = 'levelmods'
+        var inputsGroups = document.getElementById(id).getElementsByClassName('input-group')
+
+        var retObj = []
+
+        for (i = 0; i < inputsGroups.length; i++) {
+            var inputs = inputsGroups[i].getElementsByTagName('input')
+
+            var holder = {}
+            for (x = 0; x < inputs.length; x++) {
+                holder[inputs[x].id] = inputs[x].value
+            }
+
+            retObj.push(holder)
+        }
+
+        return retObj
+    }
+
     function duplicateInputBoxs(id) {
         var ele = document.getElementById(id)
         var clone = ele.cloneNode(true)
@@ -92,20 +112,46 @@
         clone.setAttribute( 'id', newId );
 
         var inputs = clone.getElementsByTagName('input')
-
+        var autofillCount = 1
         for (i = 0; i < inputs.length; i++) {
-            inputs[i].value = ""
+            if (arguments.length > 1) {
+                if ((autofillCount > inputs.length) || (autofillCount > arguments.length - 1)) {
+                    inputs[i].value = ""
+                } else {
+                    inputs[i].value = arguments[autofillCount]
+                }
+                autofillCount += 1
+            } else {
+                inputs[i].value = ""
+            }
         }
 
         bottomEle.after(clone)
     }
 
-
     function exportToJson() {
-        exOpject = {}
-        exOpject.EngramsToHide = sortInPlace("toHide").split("\n")
+        var exObject = {}
+        var holder
 
-        console.log(JSON.stringify(exOpject, null, 2))
+        // Engrams to hide
+        holder = sortInPlace("toHide").split("\n")
+        if (holder) {
+            exObject.EngramsToHide = holder
+        }
+
+        // Level Mods
+        holder = getInputs('levelmods')
+        if (holder) {
+            exObject.LevelMods = holder
+        }
+
+
+        if (!exObject) { return }
+        // var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exObject, null, 2))
+        // var dlAnchorElem = document.getElementById('downloadAnchorElem')
+        // dlAnchorElem.setAttribute("href", dataStr)
+        // dlAnchorElem.setAttribute("download", "ARKEngramHelperExport.json")
+        // dlAnchorElem.click()
     }
 </script>
 <br>
@@ -120,7 +166,7 @@
 <!--                 <li class="nav-item">
                     <a class="nav-link" data-toggle="tab" href="#levelmods">Level mods</a>
                 </li>
-                <li class="nav-item">
+ --><!--                 <li class="nav-item">
                     <a class="nav-link" data-toggle="tab" href="#costmods">Cost mods</a>
                 </li>
                 <li class="nav-item">
@@ -129,9 +175,9 @@
                 <li class="nav-item">
                     <a class="nav-link" data-toggle="tab" href="#findreplace">Find and Replace</a>
                 </li>
-                <li class="nav-item">
+ -->                <li class="nav-item">
                     <a class="nav-link" data-toggle="tab" href="#eximport">Export/Import</a>
-                </li> -->
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" data-toggle="tab" href="#output">Outputs</a>
                 </li>
@@ -179,9 +225,9 @@
                     <label class="col-form-label col-form-label-lg w-25">Level</label>
                     <form action="javascript:parseServerOutput()">
                         <div class="input-group w-50" id="levelmodsinputs1">
-                            <input type="text" class="form-control w-25" placeholder="&quot;EngramEntry_Bow_C&quot;">
+                            <input type="text" class="form-control w-25" id="engram" placeholder="&quot;EngramEntry_Bow_C&quot;">
                             <span class="input-group-addon"></span>
-                            <input type="text" class="form-control w-25" placeholder="50"/>
+                            <input type="text" class="form-control w-25" id="level" placeholder="50"/>
                         </div>
                     </form>
                     <button class="btn btn-primary" onclick="(duplicateInputBoxs('levelmodsinputs1'))">+</button>
@@ -193,9 +239,9 @@
                     <label class="col-form-label col-form-label-lg w-25">Cost</label>
                     <form action="javascript:parseServerOutput()">
                         <div class="input-group w-50" id="costmodsinputs1">
-                            <input type="text" class="form-control w-25" placeholder="&quot;EngramEntry_Bow_C&quot;">
+                            <input type="text" class="form-control w-25" id="engram" placeholder="&quot;EngramEntry_Bow_C&quot;">
                             <span class="input-group-addon"></span>
-                            <input type="text" class="form-control w-25" placeholder="50"/>
+                            <input type="text" class="form-control w-25" id="value" placeholder="50"/>
                         </div>
                     </form>
                     <button class="btn btn-primary" onclick="(duplicateInputBoxs('costmodsinputs1'))">+</button>
@@ -206,7 +252,7 @@
                     <label class="col-form-label col-form-label-lg w-25">Engram (regex)</label>
                     <form action="javascript:parseServerOutput()">
                         <div class="input-group w-25" id="prereqsmodsinputs1">
-                            <input type="text" class="form-control" placeholder="&quot;EngramEntry_Bow_C&quot;">
+                            <input type="text" class="form-control" id="engram" placeholder="&quot;EngramEntry_Bow_C&quot;">
                         </div>
                     </form>
                     <button class="btn btn-primary" onclick="(duplicateInputBoxs('prereqsmodsinputs1'))">+</button>
@@ -218,17 +264,19 @@
                     <label class="col-form-label col-form-label-lg w-25">Replace ($# for capture groups)</label>
                     <form action="javascript:parseServerOutput()">
                         <div class="input-group w-50" id="findreplaceinputs1">
-                            <input type="text" class="form-control w-25" placeholder="&quot;EngramEntry_Bow_C&quot;">
+                            <input type="text" class="form-control w-25" id="find" placeholder="&quot;EngramEntry_Bow_C&quot;">
                             <span class="input-group-addon"></span>
-                            <input type="text" class="form-control w-25" placeholder="50"/>
+                            <input type="text" class="form-control w-25" id="replace" placeholder="50"/>
                         </div>
                     </form>
                     <button class="btn btn-primary" onclick="(duplicateInputBoxs('findreplaceinputs1'))">+</button>
                 </div>
 
+                <!-- Export/Import -->
                 <div class="tab-pane fade" id="eximport">
                     <br>
                     <button class="btn btn-primary" onclick="(exportToJson())">Export</button>
+                    <a id="downloadAnchorElem" style="display:none"></a>
                 </div>
 
                 <div class="tab-pane fade" id="output">

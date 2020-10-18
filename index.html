@@ -77,11 +77,29 @@
         $('#myTabs a[href="#output"]').tab('show')
     }
 
-    // function duplicateInputBoxs(id) {
-        // let ele = document.getElementById(id)
-        // let clone = ele.cloneNode(true)
-        // clone.setAttribute( 'id', newId );
-    // }
+    function duplicateInputBoxs(id) {
+        var ele = document.getElementById(id)
+        var clone = ele.cloneNode(true)
+
+        var bottomEle = ele.parentNode.lastElementChild
+
+        var newId = bottomEle.id
+        newId = newId.replace(/\d+/, parseInt(newId.match(/\d+/g)) + 1)
+        clone.setAttribute( 'id', newId );
+
+        var inputs = clone.getElementsByTagName('input')
+
+        for (i = 0; i < inputs.length; i++) {
+            inputs[i].value = ""
+        }
+
+        bottomEle.after(clone)
+    }
+
+
+    function exportToJson() {
+        
+    }
 </script>
 <br>
 <div class="form-horizontal">
@@ -148,33 +166,62 @@
                     </form>
                 </div>
 
-
-<!--                 <div class="tab-pane fade" id="levelmods">
-                    <label class="col-form-label col-form-label-lg">Engram (regex)</label>
+                <!-- Level Mods -->
+                <div class="tab-pane fade" id="levelmods">
+                    <label class="col-form-label col-form-label-lg w-25">Engram (regex)</label>
+                    <label class="col-form-label col-form-label-lg w-25">Level</label>
                     <form action="javascript:parseServerOutput()">
-                        <div class="input-group w-50" id="levelmodsinputs">
-                            <input type="text" class="form-control" placeholder="&quot;EngramEntry_Bow_C&quot;"></div>
+                        <div class="input-group w-50" id="levelmodsinputs1">
+                            <input type="text" class="form-control w-25" placeholder="&quot;EngramEntry_Bow_C&quot;">
                             <span class="input-group-addon"></span>
-                            <input type="text" class="form-control" placeholder="50"/>
+                            <input type="text" class="form-control w-25" placeholder="50"/>
                         </div>
                     </form>
-                    <button class="btn btn-primary" onclick="()"></button>
+                    <button class="btn btn-primary" onclick="(duplicateInputBoxs('levelmodsinputs1'))">+</button>
                 </div>
 
+                <!-- Cost Mods -->
                 <div class="tab-pane fade" id="costmods">
+                    <label class="col-form-label col-form-label-lg w-25">Engram (regex)</label>
+                    <label class="col-form-label col-form-label-lg w-25">Cost</label>
+                    <form action="javascript:parseServerOutput()">
+                        <div class="input-group w-50" id="costmodsinputs1">
+                            <input type="text" class="form-control w-25" placeholder="&quot;EngramEntry_Bow_C&quot;">
+                            <span class="input-group-addon"></span>
+                            <input type="text" class="form-control w-25" placeholder="50"/>
+                        </div>
+                    </form>
+                    <button class="btn btn-primary" onclick="(duplicateInputBoxs('costmodsinputs1'))">+</button>
                 </div>
 
+                <!-- Prereqs Mods -->
                 <div class="tab-pane fade" id="prereqsmods">
-
+                    <label class="col-form-label col-form-label-lg w-25">Engram (regex)</label>
+                    <form action="javascript:parseServerOutput()">
+                        <div class="input-group w-25" id="prereqsmodsinputs1">
+                            <input type="text" class="form-control" placeholder="&quot;EngramEntry_Bow_C&quot;">
+                        </div>
+                    </form>
+                    <button class="btn btn-primary" onclick="(duplicateInputBoxs('prereqsmodsinputs1'))">+</button>
                 </div>
 
+                <!-- Find and replace -->
                 <div class="tab-pane fade" id="findreplace">
-                    
+                    <label class="col-form-label col-form-label-lg w-25">Find (regex)</label>
+                    <label class="col-form-label col-form-label-lg w-25">Replace ($# for capture groups)</label>
+                    <form action="javascript:parseServerOutput()">
+                        <div class="input-group w-50" id="findreplaceinputs1">
+                            <input type="text" class="form-control w-25" placeholder="&quot;EngramEntry_Bow_C&quot;">
+                            <span class="input-group-addon"></span>
+                            <input type="text" class="form-control w-25" placeholder="50"/>
+                        </div>
+                    </form>
+                    <button class="btn btn-primary" onclick="(duplicateInputBoxs('findreplaceinputs1'))">+</button>
                 </div>
 
                 <div class="tab-pane fade" id="eximport">
                     
-                </div> -->
+                </div>
 
                 <div class="tab-pane fade" id="output">
                     <!-- Post process read only textbox -->

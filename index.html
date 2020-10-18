@@ -45,6 +45,12 @@
         return postParse.join("\n")
     }
 
+    function sortInPlace(id) {
+        let toHide = document.getElementById("toHide")
+        toHide.value = toHide.value.split("\n").sort().join("\n")
+        return toHide.value
+    }
+
     function parseServerOutput() {
         var serverOutput = document.getElementById("serverOutput").value
         var serverEngrams = serverOutput.match(expression)
@@ -54,9 +60,7 @@
             return
         }
 
-        let toHide = document.getElementById("toHide")
-        toHide.value = toHide.value.split("\n").sort().join("\n")
-        toHide = toHide.value
+        toHide = sortInPlace("toHide")
         engramsToHideRe = setupHides(toHide)
 
         postParse = filterEngrams(serverEngrams, engramsToHideRe)
@@ -98,7 +102,10 @@
 
 
     function exportToJson() {
-        
+        exOpject = {}
+        exOpject.EngramsToHide = sortInPlace("toHide").split("\n")
+
+        console.log(JSON.stringify(exOpject, null, 2))
     }
 </script>
 <br>
@@ -220,7 +227,8 @@
                 </div>
 
                 <div class="tab-pane fade" id="eximport">
-                    
+                    <br>
+                    <button class="btn btn-primary" onclick="(exportToJson())">Export</button>
                 </div>
 
                 <div class="tab-pane fade" id="output">

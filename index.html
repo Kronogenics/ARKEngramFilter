@@ -1,7 +1,3 @@
-<head>
-    <!-- <base href="/ARKEngramFilter/" /> -->
-</head>
-
 <html>
 <!-- CSS -->
 <link rel="stylesheet" href="static/css/bootstrap.min.css">
@@ -45,21 +41,24 @@
             }
         })
 
+        postParse.sort()
         return postParse.join("\n")
     }
 
     function parseServerOutput() {
-        var serverOutput = document.getElementById("serverOutput").value;
-        var toHide = document.getElementById("toHide").value;
-
-        var serverEngrams = serverOutput.match(expression);
+        var serverOutput = document.getElementById("serverOutput").value
+        var serverEngrams = serverOutput.match(expression)
 
         if (!serverEngrams) {
-            alert("Invalid server output input.");
+            alert("Invalid server output input.")
             return
         }
 
+        let toHide = document.getElementById("toHide")
+        toHide.value = toHide.value.split("\n").sort().join("\n")
+        toHide = toHide.value
         engramsToHideRe = setupHides(toHide)
+
         postParse = filterEngrams(serverEngrams, engramsToHideRe)
 
         if (document.getElementById("noLevels").checked) {
@@ -77,6 +76,12 @@
         document.getElementById("postParse").value = postParse
         $('#myTabs a[href="#output"]').tab('show')
     }
+
+    // function duplicateInputBoxs(id) {
+        // let ele = document.getElementById(id)
+        // let clone = ele.cloneNode(true)
+        // clone.setAttribute( 'id', newId );
+    // }
 </script>
 <br>
 <div class="form-horizontal">
@@ -87,6 +92,21 @@
                 <li class="nav-item">
                     <a class="nav-link active" data-toggle="tab" href="#inputs">Inputs</a>
                 </li>
+<!--                 <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#levelmods">Level mods</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#costmods">Cost mods</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#prereqsmods">Pre-Requirements mods</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#findreplace">Find and Replace</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#eximport">Export/Import</a>
+                </li> -->
                 <li class="nav-item">
                     <a class="nav-link" data-toggle="tab" href="#output">Outputs</a>
                 </li>
@@ -108,17 +128,17 @@
                         <br>
 
                         <div class="custom-control custom-switch">
-                            <input type="checkbox" class="custom-control-input" id="noLevels">
+                            <input type="checkbox" class="custom-control-input" id="noLevels"/>
                             <label class="custom-control-label" for="noLevels">Remove Level Requirements</label>
                         </div>
 
                         <div class="custom-control custom-switch">
-                            <input type="checkbox" class="custom-control-input" id="noCost">
+                            <input type="checkbox" class="custom-control-input" id="noCost"/>
                             <label class="custom-control-label" for="noCost">Remove Point Cost</label>
                         </div>
 
                         <div class="custom-control custom-switch">
-                            <input type="checkbox" class="custom-control-input" id="noPreReqs">
+                            <input type="checkbox" class="custom-control-input" id="noPreReqs"/>
                             <label class="custom-control-label" for="noPreReqs">Remove Pre-Requirements</label>
                         </div>
                         <br>
@@ -127,6 +147,34 @@
                         <input type="submit" value="Submit">
                     </form>
                 </div>
+
+
+<!--                 <div class="tab-pane fade" id="levelmods">
+                    <label class="col-form-label col-form-label-lg">Engram (regex)</label>
+                    <form action="javascript:parseServerOutput()">
+                        <div class="input-group w-50" id="levelmodsinputs">
+                            <input type="text" class="form-control" placeholder="&quot;EngramEntry_Bow_C&quot;"></div>
+                            <span class="input-group-addon"></span>
+                            <input type="text" class="form-control" placeholder="50"/>
+                        </div>
+                    </form>
+                    <button class="btn btn-primary" onclick="()"></button>
+                </div>
+
+                <div class="tab-pane fade" id="costmods">
+                </div>
+
+                <div class="tab-pane fade" id="prereqsmods">
+
+                </div>
+
+                <div class="tab-pane fade" id="findreplace">
+                    
+                </div>
+
+                <div class="tab-pane fade" id="eximport">
+                    
+                </div> -->
 
                 <div class="tab-pane fade" id="output">
                     <!-- Post process read only textbox -->

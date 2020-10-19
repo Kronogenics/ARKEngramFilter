@@ -25,10 +25,10 @@
         return engramsToHide
     }
 
-    function filterEngrams(serverEngrams, engramRE) {
+    function filterEngrams(serverEngrams, engramREs) {
         var postParse = []
         serverEngrams.forEach(function(sEngram) {
-            var match = engramsToHideRe.some(function(eHideRe, index) {
+            var match = engramREs.some(function(eHideRe, index) {
                 if (sEngram.match(eHideRe)) {
                     return true;
                 } else {
@@ -41,14 +41,80 @@
             }
         })
 
-        postParse.sort()
-        return postParse.join("\n")
+        return postParse
     }
 
     function sortInPlace(id) {
         let toSort = document.getElementById(id)
         toSort.value = toSort.value.split("\n").sort().join("\n")
         return toSort.value
+    }
+
+    function getInputs(id) {
+        var inputsGroups = document.getElementById(id).getElementsByClassName('input-group')
+
+        var retObj = []
+
+        for (i = 0; i < inputsGroups.length; i++) {
+            var inputs = inputsGroups[i].getElementsByTagName('input')
+
+            var holder = {}
+            var notEmpty = false
+            for (x = 0; x < inputs.length; x++) {
+                holder[inputs[x].id] = inputs[x].value
+                if (inputs[x].value) {
+                    notEmpty = true
+                }
+            }
+
+            if (notEmpty) {
+                retObj.push(holder)
+            }
+        }
+
+        return retObj
+    }
+
+    function getFindAndReplace(parentId, object, find = "", prefix = "", suffix = "") {
+        var data = getInputs(parentId)
+        if (data) {
+            for (var i = 0; i < data.length; i++) {
+                var holder = []
+                for (const [key, value] of Object.entries(data[i])) {
+                    holder.push(value)
+                }
+
+                if (holder.length < 2) {
+                    holder.push("")
+                }
+
+                if (!find) {
+                    object.push([holder[0], holder[1]])
+                } else {
+                    object.push([find, prefix + holder[1] + suffix, holder[0]])
+                }
+
+
+            }
+
+            return object
+        }
+    }
+
+    function findReplaceSearchFilter(input, findReplaceSearch) {
+        for (var i = 0; i < input.length; i++) {
+            findReplaceSearch.forEach(function(fRS) {
+                if (fRS.length == 3) { // if a search is applied
+                    if (input[i].match(fRS[2])) {
+                        input[i] = input[i].replace(new RegExp(fRS[0]), fRS[1])
+                    }
+                } else {
+                    input[i] = input[i].replace(new RegExp(fRS[0]), fRS[1])
+                }
+            })
+        }
+
+        return input
     }
 
     function parseServerOutput() {
@@ -61,43 +127,55 @@
         }
 
         toHide = sortInPlace("toHide")
-        engramsToHideRe = setupHides(toHide)
+        var engramsToHideRe = setupHides(toHide)
 
         postParse = filterEngrams(serverEngrams, engramsToHideRe)
 
+        findReplaceSearch = []
+
         if (document.getElementById("noLevels").checked) {
-            postParse = postParse.replace(/(EngramLevelRequirement=)\d*/g, "$10")
+            findReplaceSearch.push(["(EngramLevelRequirement=)\\d+", "$10"])
+        } else {
+            findReplaceSearch = getFindAndReplace('levelmods', findReplaceSearch, "(EngramLevelRequirement=)\\d+", "$1")
         }
 
         if (document.getElementById("noCost").checked) {
-            postParse = postParse.replace(/(EngramPointsCost=)\d*/g, "$10")
+            findReplaceSearch.push(["(EngramPointsCost=)\\d+", "$10"])
+        } else {
+            findReplaceSearch = getFindAndReplace('costmods', findReplaceSearch, "(EngramPointsCost=)\\d+", "$1")
         }
 
         if (document.getElementById("noPreReqs").checked) {
-            postParse = postParse.replace(/(RemoveEngramPreReq=)false/g, "$1true")
+            findReplaceSearch.push(["(RemoveEngramPreReq=)\\d+", "$1true"])
+        } else {
+            findReplaceSearch = getFindAndReplace('prereqsmods', findReplaceSearch, "(RemoveEngramPreReq=)false", "$1true")
         }
+
+        findReplaceSearch = getFindAndReplace('findreplace', findReplaceSearch)
+
+        postParse = findReplaceSearchFilter(postParse, findReplaceSearch).sort().join("\n")
 
         document.getElementById("postParse").value = postParse
         $('#myTabs a[href="#output"]').tab('show')
     }
 
-    function getInputs(id) {
-        var inputsGroups = document.getElementById(id).getElementsByClassName('input-group')
+    function fillInputs(parentId) {
+        var inputs = document.getElementById(parentId).getElementsByTagName('input')
 
-        var retObj = []
-
-        for (i = 0; i < inputsGroups.length; i++) {
-            var inputs = inputsGroups[i].getElementsByTagName('input')
-
-            var holder = {}
-            for (x = 0; x < inputs.length; x++) {
-                holder[inputs[x].id] = inputs[x].value
+        var autofillCount = 1
+        for (i = 0; i < inputs.length; i++) {
+            if (arguments.length > 1) {
+                // if less autofills than inputs
+                if ((autofillCount > inputs.length) || (autofillCount > arguments.length - 1)) { 
+                    inputs[i].value = ""
+                } else {
+                    inputs[i].value = arguments[autofillCount]
+                }
+                autofillCount += 1
+            } else {
+                inputs[i].value = ""
             }
-
-            retObj.push(holder)
         }
-
-        return retObj
     }
 
     function duplicateInputBoxs(id) {
@@ -110,22 +188,17 @@
         newId = newId.replace(/\d+/, parseInt(newId.match(/\d+/g)) + 1)
         clone.setAttribute( 'id', newId );
 
-        var inputs = clone.getElementsByTagName('input')
-        var autofillCount = 1
-        for (i = 0; i < inputs.length; i++) {
-            if (arguments.length > 1) {
-                if ((autofillCount > inputs.length) || (autofillCount > arguments.length - 1)) {
-                    inputs[i].value = ""
-                } else {
-                    inputs[i].value = arguments[autofillCount]
-                }
-                autofillCount += 1
-            } else {
-                inputs[i].value = ""
-            }
-        }
+        clone.getElementsByTagName('button')[0].style.visibility = 'visible'
 
         bottomEle.after(clone)
+
+        if (arguments.length > 1) {
+            fillInputs(newId, ...Array.from(arguments).slice(1, arguments.length))
+        }
+    }
+
+    function deleteInputBoxs(id) {
+        document.getElementById(id).remove()
     }
 
     function exportToJson() {
@@ -162,7 +235,7 @@
             exObject.FindReplace = holder
         }
 
-        console.log(exObject)
+        // console.log(exObject)
         if (!exObject) { return }
         var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exObject, null, 2))
         var dlAnchorElem = document.getElementById('downloadAnchorElem')
@@ -184,7 +257,11 @@
                         holder.push(value)
                     }
 
-                    duplicateInputBoxs(id, ...holder)
+                    if (i == 0) {
+                        fillInputs(id, ...holder)
+                    } else {
+                        duplicateInputBoxs(id, ...holder)
+                    }
                 }
             }
         }
@@ -239,7 +316,7 @@
                 <li class="nav-item">
                     <a class="nav-link active" data-toggle="tab" href="#inputs">Inputs</a>
                 </li>
-                <!-- <li class="nav-item">
+                <li class="nav-item">
                     <a class="nav-link" data-toggle="tab" href="#levelmods">Level mods</a>
                 </li>
                 <li class="nav-item">
@@ -250,7 +327,7 @@
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" data-toggle="tab" href="#findreplace">Find and Replace</a>
-                </li> -->
+                </li>
                 <li class="nav-item">
                     <a class="nav-link" data-toggle="tab" href="#eximport">Export/Import</a>
                 </li>
@@ -262,96 +339,129 @@
                 </li>
             </ul>
             <div id="myTabContent" class="tab-content">
+                <!-- Server output -->
+                <label class="col-form-label col-form-label-lg" for="serverOutput">Server output:</label>
+                <textarea class="form-control" rows="10" required id="serverOutput"></textarea>
+
                 <div class="tab-pane fade active show" id="inputs">
-                    <form action="javascript:parseServerOutput()">
-                        <!-- Server output -->
-                        <label class="col-form-label col-form-label-lg" for="serverOutput">Server output:</label>
-                        <textarea class="form-control" rows="10" required id="serverOutput"></textarea>
-                        <br>
 
-                        <!-- Engrams to hide -->
-                        <label class="col-form-label col-form-label-lg" for="toHide">Engrams to hide (newline seperated) (regex):</label>
-                        <textarea class="form-control" rows="10" placeholder="&quot;EngramEntry_Bow_C&quot;&#13;&#10;&quot;EngramEntry_WeaponWhip_C&quot;" id="toHide"></textarea>
-                        <br>
+                    <!-- Engrams to hide -->
+                    <label class="col-form-label col-form-label-lg" for="toHide">Engrams to hide (newline seperated) (regex):</label>
+                    <textarea class="form-control" rows="10" placeholder="&quot;EngramEntry_Bow_C&quot;&#13;&#10;&quot;EngramEntry_WeaponWhip_C&quot;" id="toHide"></textarea>
+                    <br>
 
-                        <div class="custom-control custom-switch">
-                            <input type="checkbox" class="custom-control-input" id="noLevels"/>
-                            <label class="custom-control-label" for="noLevels">Remove Level Requirements</label>
-                        </div>
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="noLevels"/>
+                        <label class="custom-control-label" for="noLevels">Remove Level Requirements</label>
+                    </div>
 
-                        <div class="custom-control custom-switch">
-                            <input type="checkbox" class="custom-control-input" id="noCost"/>
-                            <label class="custom-control-label" for="noCost">Remove Point Cost</label>
-                        </div>
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="noCost"/>
+                        <label class="custom-control-label" for="noCost">Remove Point Cost</label>
+                    </div>
 
-                        <div class="custom-control custom-switch">
-                            <input type="checkbox" class="custom-control-input" id="noPreReqs"/>
-                            <label class="custom-control-label" for="noPreReqs">Remove Pre-Requirements</label>
-                        </div>
-                        <br>
-
-                        <!-- Submit button -->
-                        <input type="submit" value="Submit">
-                    </form>
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="noPreReqs"/>
+                        <label class="custom-control-label" for="noPreReqs">Remove Pre-Requirements</label>
+                    </div>
+                    <br>
+                    <button class="btn btn-primary" onclick="(parseServerOutput())">Submit</button>
                 </div>
 
                 <!-- Level Mods -->
                 <div class="tab-pane fade" id="levelmods">
                     <label class="col-form-label col-form-label-lg w-25">Engram (regex)</label>
                     <label class="col-form-label col-form-label-lg w-25">Level</label>
-                    <form action="javascript:parseServerOutput()">
+                    <div>
                         <div class="input-group w-50" id="levelmodsinputs1">
                             <input type="text" class="form-control w-25" id="engram" placeholder="&quot;EngramEntry_Bow_C&quot;">
                             <span class="input-group-addon"></span>
                             <input type="text" class="form-control w-25" id="level" placeholder="50"/>
+                            <span class="input-group-addon">&nbsp;</span>
+                            <button class="btn btn-danger p-1 h-25" style="visibility: hidden" onclick="(deleteInputBoxs(this.parentNode.id))">-</button>
                         </div>
-                    </form>
-                    <button class="btn btn-primary" onclick="(duplicateInputBoxs('levelmodsinputs1'))">+</button>
+                    </div>
+                    <br>
+                    <div class="input-group w-50">
+                        <button class="btn btn-success ml-auto" onclick="(duplicateInputBoxs('levelmodsinputs1'))">+</button>
+                        <span class="input-group-addon">&nbsp;</span>
+                        <button class="btn btn-danger p-1 h-25" style="visibility: hidden">-</button>
+                    </div>
+                    <br>
+                    <button class="btn btn-primary" onclick="(parseServerOutput())">Submit</button>
                 </div>
 
                 <!-- Cost Mods -->
                 <div class="tab-pane fade" id="costmods">
                     <label class="col-form-label col-form-label-lg w-25">Engram (regex)</label>
                     <label class="col-form-label col-form-label-lg w-25">Cost</label>
-                    <form action="javascript:parseServerOutput()">
+                    <div>
                         <div class="input-group w-50" id="costmodsinputs1">
                             <input type="text" class="form-control w-25" id="engram" placeholder="&quot;EngramEntry_Bow_C&quot;">
                             <span class="input-group-addon"></span>
                             <input type="text" class="form-control w-25" id="Cost" placeholder="50"/>
+                            <span class="input-group-addon">&nbsp;</span>
+                            <button class="btn btn-danger p-1 h-25" style="visibility: hidden" onclick="(deleteInputBoxs(this.parentNode.id))">-</button>
                         </div>
-                    </form>
-                    <button class="btn btn-primary" onclick="(duplicateInputBoxs('costmodsinputs1'))">+</button>
+                    </div>
+                    <br>
+                    <div class="input-group w-50">
+                        <button class="btn btn-success ml-auto" onclick="(duplicateInputBoxs('costmodsinputs1'))">+</button>
+                        <span class="input-group-addon">&nbsp;</span>
+                        <button class="btn btn-danger p-1 h-25" style="visibility: hidden">-</button>
+                    </div>
+                    <br>
+                    <button class="btn btn-primary" onclick="(parseServerOutput())">Submit</button>
                 </div>
 
                 <!-- Prereqs Mods -->
                 <div class="tab-pane fade" id="prereqsmods">
                     <label class="col-form-label col-form-label-lg w-25">Engram (regex)</label>
-                    <form action="javascript:parseServerOutput()">
+                    <div>
                         <div class="input-group w-25" id="prereqsmodsinputs1">
                             <input type="text" class="form-control" id="engram" placeholder="&quot;EngramEntry_Bow_C&quot;">
+                            <span class="input-group-addon">&nbsp;</span>
+                            <button class="btn btn-danger p-1 h-25" style="visibility: hidden" onclick="(deleteInputBoxs(this.parentNode.id))">-</button>
                         </div>
-                    </form>
-                    <button class="btn btn-primary" onclick="(duplicateInputBoxs('prereqsmodsinputs1'))">+</button>
+                    </div>
+                    <br>
+                    <div class="input-group w-25">
+                        <button class="btn btn-success ml-auto" onclick="(duplicateInputBoxs('prereqsmodsinputs1'))">+</button>
+                        <span class="input-group-addon">&nbsp;</span>
+                        <button class="btn btn-danger p-1 h-25" style="visibility: hidden">-</button>
+                    </div>
+                    <br>
+                    <button class="btn btn-primary" onclick="(parseServerOutput())">Submit</button>
                 </div>
 
                 <!-- Find and replace -->
                 <div class="tab-pane fade" id="findreplace">
                     <label class="col-form-label col-form-label-lg w-25">Find (regex)</label>
                     <label class="col-form-label col-form-label-lg w-25">Replace ($# for capture groups)</label>
-                    <form action="javascript:parseServerOutput()">
+                    <div>
                         <div class="input-group w-50" id="findreplaceinputs1">
                             <input type="text" class="form-control w-25" id="find" placeholder="&quot;EngramEntry_Bow_C&quot;">
-                            <span class="input-group-addon"></span>
+                            <span class="input-group-addon">&nbsp;</span>
                             <input type="text" class="form-control w-25" id="replace" placeholder="50"/>
+                            <span class="input-group-addon">&nbsp;</span>
+                            <button class="btn btn-danger p-1 h-25" style="visibility: hidden" onclick="(deleteInputBoxs(this.parentNode.id))">-</button>
                         </div>
-                    </form>
-                    <button class="btn btn-primary" onclick="(duplicateInputBoxs('findreplaceinputs1'))">+</button>
+                    </div>
+                    <br>
+                    <div class="input-group w-50">
+                        <button class="btn btn-success ml-auto" onclick="(duplicateInputBoxs('findreplaceinputs1'))">+</button>
+                        <span class="input-group-addon">&nbsp;</span>
+                        <button class="btn btn-danger p-1 h-25" style="visibility: hidden">-</button>
+                    </div>
+                    <br>
+                    <button class="btn btn-primary" onclick="(parseServerOutput())">Submit</button>
                 </div>
 
                 <!-- Export/Import -->
                 <div class="tab-pane fade" id="eximport">
                     <br>
                     <button class="btn btn-primary" onclick="(exportToJson())">Export</button>
+                    <a>|</a>
                     <input id="contentFile" type="file" accept="application/json" accept=".json" onchange="importFromJson(this.files)" />
                     <a id="downloadAnchorElem" style="display:none"></a>
                 </div>
@@ -373,6 +483,7 @@
                     </p>
                 </div>
             </div>
+            <br>
         </div>
     </div>
 </div>

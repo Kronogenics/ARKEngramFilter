@@ -46,9 +46,9 @@
     }
 
     function sortInPlace(id) {
-        let toHide = document.getElementById("toHide")
-        toHide.value = toHide.value.split("\n").sort().join("\n")
-        return toHide.value
+        let toSort = document.getElementById(id)
+        toSort.value = toSort.value.split("\n").sort().join("\n")
+        return toSort.value
     }
 
     function parseServerOutput() {
@@ -82,7 +82,6 @@
     }
 
     function getInputs(id) {
-        id = 'levelmods'
         var inputsGroups = document.getElementById(id).getElementsByClassName('input-group')
 
         var retObj = []
@@ -145,13 +144,90 @@
             exObject.LevelMods = holder
         }
 
+        // Cost Mods
+        holder = getInputs('costmods')
+        if (holder) {
+            exObject.CostMods = holder
+        }
 
+        // Prereqs Mods
+        holder = getInputs('prereqsmods')
+        if (holder) {
+            exObject.PrereqsMods = holder
+        }
+
+        // Find and Replace Mods
+        holder = getInputs('findreplace')
+        if (holder) {
+            exObject.FindReplace = holder
+        }
+
+        console.log(exObject)
         if (!exObject) { return }
-        // var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exObject, null, 2))
-        // var dlAnchorElem = document.getElementById('downloadAnchorElem')
-        // dlAnchorElem.setAttribute("href", dataStr)
-        // dlAnchorElem.setAttribute("download", "ARKEngramHelperExport.json")
-        // dlAnchorElem.click()
+        var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exObject, null, 2))
+        var dlAnchorElem = document.getElementById('downloadAnchorElem')
+        dlAnchorElem.setAttribute("href", dataStr)
+        dlAnchorElem.setAttribute("download", "ARKEngramHelperExport.json")
+        dlAnchorElem.click()
+    }
+
+    function jsonPopulateForms(id, data) {
+        ele = document.getElementById(id)
+        if (data) {
+            // Is it an array of strings or not
+            if (typeof(data[0]) == "string") {
+                ele.value = data.join("\n")
+            } else if (typeof(data[0]) == "object") {
+                for (var i = 0; i < data.length; i++) {
+                    var holder = []
+                    for (const [key, value] of Object.entries(data[i])) {
+                        holder.push(value)
+                    }
+
+                    duplicateInputBoxs(id, ...holder)
+                }
+            }
+        }
+
+    }
+
+    function importFromJson(files) {
+        try {
+            if (!files.length) {
+                alert('No file selected!');
+                return
+            }
+
+            let file = files[0]
+            let reader = new FileReader()
+            const self = this
+            reader.onload = (event) => {
+                var importedJson = JSON.parse(event.target.result)
+
+                if (importedJson.EngramsToHide) {
+                    jsonPopulateForms("toHide", importedJson.EngramsToHide)
+                } 
+
+                if (importedJson.LevelMods) {
+                    jsonPopulateForms("levelmodsinputs1", importedJson.LevelMods)
+                }
+
+                if (importedJson.CostMods) {
+                    jsonPopulateForms("costmodsinputs1", importedJson.CostMods)
+                }
+
+                if (importedJson.PrereqsMods) {
+                    jsonPopulateForms("prereqsmodsinputs1", importedJson.PrereqsMods)
+                }
+
+                if (importedJson.FindReplace) {
+                    jsonPopulateForms("findreplaceinputs1", importedJson.FindReplace)
+                }
+            }
+            reader.readAsText(file)
+        } catch (err) {
+            console.error(err)
+        }
     }
 </script>
 <br>
@@ -163,10 +239,10 @@
                 <li class="nav-item">
                     <a class="nav-link active" data-toggle="tab" href="#inputs">Inputs</a>
                 </li>
-<!--                 <li class="nav-item">
+                <li class="nav-item">
                     <a class="nav-link" data-toggle="tab" href="#levelmods">Level mods</a>
                 </li>
- --><!--                 <li class="nav-item">
+                <li class="nav-item">
                     <a class="nav-link" data-toggle="tab" href="#costmods">Cost mods</a>
                 </li>
                 <li class="nav-item">
@@ -175,7 +251,7 @@
                 <li class="nav-item">
                     <a class="nav-link" data-toggle="tab" href="#findreplace">Find and Replace</a>
                 </li>
- -->                <li class="nav-item">
+                <li class="nav-item">
                     <a class="nav-link" data-toggle="tab" href="#eximport">Export/Import</a>
                 </li>
                 <li class="nav-item">
@@ -241,7 +317,7 @@
                         <div class="input-group w-50" id="costmodsinputs1">
                             <input type="text" class="form-control w-25" id="engram" placeholder="&quot;EngramEntry_Bow_C&quot;">
                             <span class="input-group-addon"></span>
-                            <input type="text" class="form-control w-25" id="value" placeholder="50"/>
+                            <input type="text" class="form-control w-25" id="Cost" placeholder="50"/>
                         </div>
                     </form>
                     <button class="btn btn-primary" onclick="(duplicateInputBoxs('costmodsinputs1'))">+</button>
@@ -276,6 +352,7 @@
                 <div class="tab-pane fade" id="eximport">
                     <br>
                     <button class="btn btn-primary" onclick="(exportToJson())">Export</button>
+                    <input id="contentFile" type="file" accept="application/json" accept=".json" onchange="importFromJson(this.files)" />
                     <a id="downloadAnchorElem" style="display:none"></a>
                 </div>
 

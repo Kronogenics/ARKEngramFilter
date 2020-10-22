@@ -342,7 +342,8 @@
 
     function OnInput() {
       this.style.height = 'auto';
-      this.style.height = (this.scrollHeight) + 'px';
+      let height = Math.max(this].scrollHeight, 100)
+      this.style.height = height + 'px';
     }
 </script>
 <br>

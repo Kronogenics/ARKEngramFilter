@@ -133,6 +133,8 @@
 
         findReplaceSearch = []
 
+        findReplaceSearch = getFindAndReplace('toHide', findReplaceSearch)
+
         if (document.getElementById("noLevels").checked) {
             findReplaceSearch.push(["(EngramLevelRequirement=)\\d+", "$10"])
         } else {
@@ -189,6 +191,10 @@
         clone.setAttribute( 'id', newId );
 
         clone.getElementsByTagName('button')[0].style.visibility = 'visible'
+        var inputs = clone.getElementsByTagName('input')
+        for (var i = 0; i < inputs.length; i++) {
+            inputs[i].value = ""
+        }
 
         bottomEle.after(clone)
 
@@ -206,7 +212,7 @@
         var holder
 
         // Engrams to hide
-        holder = sortInPlace("toHide").split("\n")
+        holder = getInputs("toHide")
         if (holder) {
             exObject.EngramsToHide = holder
         }
@@ -235,6 +241,15 @@
             exObject.FindReplace = holder
         }
 
+
+        holder = {
+            "NoLevels": document.getElementById("noLevels").checked,
+            "NoCost": document.getElementById("noCost").checked,
+            "NoPreReqs": document.getElementById("noPreReqs").checked
+        }
+
+        exObject.Toggles = holder
+
         // console.log(exObject)
         if (!exObject) { return }
         var dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exObject, null, 2))
@@ -249,8 +264,11 @@
         if (data) {
             // Is it an array of strings or not
             if (typeof(data[0]) == "string") {
-                ele.value = data.join("\n")
-            } else if (typeof(data[0]) == "object") {
+                for (var i = 0; i < data.length; i++) {
+                    data[i] = { "engram": data[i] }
+                }
+            } 
+            if (typeof(data[0]) == "object") {
                 for (var i = 0; i < data.length; i++) {
                     var holder = []
                     for (const [key, value] of Object.entries(data[i])) {
@@ -265,7 +283,6 @@
                 }
             }
         }
-
     }
 
     function importFromJson(files) {
@@ -282,7 +299,7 @@
                 var importedJson = JSON.parse(event.target.result)
 
                 if (importedJson.EngramsToHide) {
-                    jsonPopulateForms("toHide", importedJson.EngramsToHide)
+                    jsonPopulateForms("engramstohide1", importedJson.EngramsToHide)
                 } 
 
                 if (importedJson.LevelMods) {
@@ -300,11 +317,32 @@
                 if (importedJson.FindReplace) {
                     jsonPopulateForms("findreplaceinputs1", importedJson.FindReplace)
                 }
+
+                if (importedJson.Toggles) {
+                    document.getElementById("noLevels").checked = importedJson.Toggles.NoLevels
+                    document.getElementById("noCost").checked = importedJson.Toggles.NoCost
+                    document.getElementById("noPreReqs").checked = importedJson.Toggles.NoPreReqs
+                }
             }
             reader.readAsText(file)
         } catch (err) {
             console.error(err)
         }
+        $('#myTabs a[href="#serverlog"]').tab('show')
+    }
+
+    window.addEventListener('load', function () {
+        const tx = document.getElementsByTagName('textarea');
+        for (let i = 0; i < tx.length; i++) {
+            let height = Math.max(tx[i].scrollHeight, 100)
+            tx[i].setAttribute('style', 'height:' + height + 'px;overflow-y:hidden;');
+            tx[i].addEventListener("input", OnInput, false);
+        }
+    })
+
+    function OnInput() {
+      this.style.height = 'auto';
+      this.style.height = (this.scrollHeight) + 'px';
     }
 </script>
 <br>
@@ -312,9 +350,12 @@
     <div class="form-group">
         <div class="col-auto">
             <!-- Tabs -->
-            <ul class="nav nav-tabs" id="myTabs">
+            <ul class="nav nav-tabs navbar-static-top" id="myTabs">
                 <li class="nav-item">
-                    <a class="nav-link active" data-toggle="tab" href="#inputs">Inputs</a>
+                    <a class="nav-link active" data-toggle="tab" href="#serverlog">Server Log</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-toggle="tab" href="#inputs">Hide Engrams</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" data-toggle="tab" href="#levelmods">Level mods</a>
@@ -340,29 +381,28 @@
             </ul>
             <div id="myTabContent" class="tab-content">
                 <!-- Server output -->
-                <label class="col-form-label col-form-label-lg" for="serverOutput">Server output:</label>
-                <textarea class="form-control" rows="10" required id="serverOutput"></textarea>
-
-                <div class="tab-pane fade active show" id="inputs">
-
-                    <!-- Engrams to hide -->
-                    <label class="col-form-label col-form-label-lg" for="toHide">Engrams to hide (newline seperated) (regex):</label>
-                    <textarea class="form-control" rows="10" placeholder="&quot;EngramEntry_Bow_C&quot;&#13;&#10;&quot;EngramEntry_WeaponWhip_C&quot;" id="toHide"></textarea>
+                <div class="tab-pane fade active show" id="serverlog">
+                    <label class="col-form-label col-form-label-lg" for="serverOutput">Server output:</label>
+                    <textarea class="form-control" required id="serverOutput"></textarea>
                     <br>
+                    <button class="btn btn-primary" onclick="(parseServerOutput())">Submit</button>
+                </div>
 
-                    <div class="custom-control custom-switch">
-                        <input type="checkbox" class="custom-control-input" id="noLevels"/>
-                        <label class="custom-control-label" for="noLevels">Remove Level Requirements</label>
+                <div class="tab-pane fade" id="inputs">
+                    <!-- Engrams to hide -->
+                    <label class="col-form-label col-form-label-lg w-25">Engrams to hide (regex)</label>
+                    <div id="toHide">
+                        <div class="input-group w-25" id="engramstohide1">
+                            <input type="text" class="form-control" id="engram" placeholder="&quot;EngramEntry_Bow_C&quot;">
+                            <span class="input-group-addon">&nbsp;</span>
+                            <button class="btn btn-danger p-1 h-25" style="visibility: hidden" onclick="(deleteInputBoxs(this.parentNode.id))">-</button>
+                        </div>
                     </div>
-
-                    <div class="custom-control custom-switch">
-                        <input type="checkbox" class="custom-control-input" id="noCost"/>
-                        <label class="custom-control-label" for="noCost">Remove Point Cost</label>
-                    </div>
-
-                    <div class="custom-control custom-switch">
-                        <input type="checkbox" class="custom-control-input" id="noPreReqs"/>
-                        <label class="custom-control-label" for="noPreReqs">Remove Pre-Requirements</label>
+                    <br>
+                    <div class="input-group w-25">
+                        <button class="btn btn-success ml-auto" onclick="(duplicateInputBoxs('engramstohide1'))">+</button>
+                        <span class="input-group-addon">&nbsp;</span>
+                        <button class="btn btn-danger p-1 h-25" style="visibility: hidden">-</button>
                     </div>
                     <br>
                     <button class="btn btn-primary" onclick="(parseServerOutput())">Submit</button>
@@ -370,6 +410,11 @@
 
                 <!-- Level Mods -->
                 <div class="tab-pane fade" id="levelmods">
+                    <br>
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="noLevels"/>
+                        <label class="custom-control-label" for="noLevels">Global Remove Level Requirements</label>
+                    </div>
                     <label class="col-form-label col-form-label-lg w-25">Engram (regex)</label>
                     <label class="col-form-label col-form-label-lg w-25">Level</label>
                     <div>
@@ -393,6 +438,11 @@
 
                 <!-- Cost Mods -->
                 <div class="tab-pane fade" id="costmods">
+                    <br>
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="noCost"/>
+                        <label class="custom-control-label" for="noCost">Global Remove Point Cost</label>
+                    </div>
                     <label class="col-form-label col-form-label-lg w-25">Engram (regex)</label>
                     <label class="col-form-label col-form-label-lg w-25">Cost</label>
                     <div>
@@ -416,6 +466,11 @@
 
                 <!-- Prereqs Mods -->
                 <div class="tab-pane fade" id="prereqsmods">
+                    <br>
+                    <div class="custom-control custom-switch">
+                        <input type="checkbox" class="custom-control-input" id="noPreReqs"/>
+                        <label class="custom-control-label" for="noPreReqs">Global Remove Pre-Requirements</label>
+                    </div>
                     <label class="col-form-label col-form-label-lg w-25">Engram (regex)</label>
                     <div>
                         <div class="input-group w-25" id="prereqsmodsinputs1">
@@ -469,7 +524,7 @@
                 <div class="tab-pane fade" id="output">
                     <!-- Post process read only textbox -->
                     <label class="col-form-label col-form-label-lg" for="postParse">Post processing:</label>
-                    <textarea class="form-control" rows="27" id="postParse" readonly=""></textarea>
+                    <textarea class="form-control" id="postParse" readonly=""></textarea>
                 </div>
 
                 <div class="tab-pane fade w-50 p-5" id="about">

@@ -148,11 +148,8 @@
 
         postParse = findReplaceSearchFilter(postParse, findReplaceSearch).sort().join("\n")
 
-        postParseTextbox = document.getElementById("postParse");
-        postParseTextbox.value = postParse;
-        OnInput(postParseTextbox);
-
-        $('#myTabs a[href="#output"]').tab('show');
+        document.getElementById("postParse").value = postParse
+        $('#myTabs a[href="#output"]').tab('show')
     }
 
     function fillInputs(parentId) {
@@ -326,7 +323,7 @@
     }
 
     window.addEventListener('load', function () {
-        const tx = document.getElementsByTagName('textarea');
+        var tx = document.getElementsByTagName('textarea');
         for (let i = 0; i < tx.length; i++) {
             let height = Math.max(tx[i].scrollHeight, 100)
             tx[i].setAttribute('style', 'height:' + height + 'px;overflow-y:hidden;');
@@ -334,11 +331,10 @@
         }
     })
 
-    function OnInput(element = null) {
-        item = element ? element : this
-        item.style.height = 'auto';
-        let height = Math.max(item.scrollHeight, 100)
-        item.style.height = height + 'px';
+    function OnInput() {
+      this.style.height = 'auto';
+      let height = Math.max(this.scrollHeight, 100)
+      this.style.height = height + 'px';
     }
 </script>
 <br>

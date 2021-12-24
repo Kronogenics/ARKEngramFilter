@@ -151,7 +151,8 @@
         element = document.getElementById("postParse");
         element.value = postParse
         $('#myTabs a[href="#output"]').tab('show')
-        element.dispatchEvent(new Event('input'));
+        setTimeout(function() { element.dispatchEvent(new Event('input')); }, 1000);
+
     }
 
     function fillInputs(parentId) {

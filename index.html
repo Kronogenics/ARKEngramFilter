@@ -150,8 +150,8 @@
 
         element = document.getElementById("postParse");
         element.value = postParse
-        element.dispatchEvent(new Event('input'));
         $('#myTabs a[href="#output"]').tab('show')
+        element.dispatchEvent(new Event('input'));
     }
 
     function fillInputs(parentId) {

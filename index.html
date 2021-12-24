@@ -10,21 +10,6 @@
 <script>
     const expression = /OverrideNamedEngramEntries=(.*)/g;
 
-    function setupHides(hideInput) {
-        if (!hideInput) {
-            return []
-        }
-
-        var engramsToHide = hideInput.split("\n");
-
-        var engramsToHideRe = []
-        engramsToHide.forEach(function(eHide) {
-            engramsToHideRe.push(new RegExp(eHide))
-        })
-
-        return engramsToHide
-    }
-
     function filterEngrams(serverEngrams, engramREs) {
         var postParse = []
         serverEngrams.forEach(function(sEngram) {
@@ -45,9 +30,16 @@
     }
 
     function sortInPlace(id) {
-        let toSort = document.getElementById(id)
-        toSort.value = toSort.value.split("\n").sort().join("\n")
-        return toSort.value
+        let toSort = document.getElementById(id);
+        toSort = toSort.querySelectorAll('input');
+
+        var inputs = [];
+        toSort.forEach(function(x) {
+            if (x.value) {
+                inputs.push(x.value);
+            }
+        });
+        return inputs.sort();
     }
 
     function getInputs(id) {
@@ -126,10 +118,9 @@
             return
         }
 
-        toHide = sortInPlace("toHide")
-        var engramsToHideRe = setupHides(toHide)
+        var toHide = sortInPlace("toHide")
 
-        postParse = filterEngrams(serverEngrams, engramsToHideRe)
+        postParse = filterEngrams(serverEngrams, toHide)
 
         findReplaceSearch = []
 
@@ -157,8 +148,11 @@
 
         postParse = findReplaceSearchFilter(postParse, findReplaceSearch).sort().join("\n")
 
-        document.getElementById("postParse").value = postParse
-        $('#myTabs a[href="#output"]').tab('show')
+        postParseTextbox = document.getElementById("postParse");
+        postParseTextbox.value = postParse;
+        OnInput(postParseTextbox);
+
+        $('#myTabs a[href="#output"]').tab('show');
     }
 
     function fillInputs(parentId) {
@@ -168,7 +162,7 @@
         for (i = 0; i < inputs.length; i++) {
             if (arguments.length > 1) {
                 // if less autofills than inputs
-                if ((autofillCount > inputs.length) || (autofillCount > arguments.length - 1)) { 
+                if ((autofillCount > inputs.length) || (autofillCount > arguments.length - 1)) {
                     inputs[i].value = ""
                 } else {
                     inputs[i].value = arguments[autofillCount]
@@ -267,7 +261,7 @@
                 for (var i = 0; i < data.length; i++) {
                     data[i] = { "engram": data[i] }
                 }
-            } 
+            }
             if (typeof(data[0]) == "object") {
                 for (var i = 0; i < data.length; i++) {
                     var holder = []
@@ -300,7 +294,7 @@
 
                 if (importedJson.EngramsToHide) {
                     jsonPopulateForms("engramstohide1", importedJson.EngramsToHide)
-                } 
+                }
 
                 if (importedJson.LevelMods) {
                     jsonPopulateForms("levelmodsinputs1", importedJson.LevelMods)
@@ -340,10 +334,11 @@
         }
     })
 
-    function OnInput() {
-      this.style.height = 'auto';
-      let height = Math.max(this.scrollHeight, 100)
-      this.style.height = height + 'px';
+    function OnInput(element = null) {
+        item = element ? element : this
+        item.style.height = 'auto';
+        let height = Math.max(item.scrollHeight, 100)
+        item.style.height = height + 'px';
     }
 </script>
 <br>
